@@ -1,6 +1,6 @@
 /**
  * The MIT License
- * Copyright (c) 2014 Ilkka Seppälä
+ * Copyright (c) 2014-2016 Ilkka Seppälä
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
  */
 package com.iluwatar.hexagonal.banking;
 
+import com.iluwatar.hexagonal.mongo.MongoConnectionPropertiesLoader;
 import com.mongodb.MongoClient;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -35,8 +36,6 @@ import static org.junit.Assert.assertEquals;
 @Ignore
 public class MongoBankTest {
 
-  private static final String TEST_HOST = "localhost";
-  private static final int TEST_PORT = 27017;
   private static final String TEST_DB = "lotteryDBTest";
   private static final String TEST_ACCOUNTS_COLLECTION = "testAccounts";
 
@@ -44,10 +43,12 @@ public class MongoBankTest {
 
   @Before
   public void init() {
-    MongoClient mongoClient = new MongoClient(TEST_HOST, TEST_PORT);
+    MongoConnectionPropertiesLoader.load();
+    MongoClient mongoClient = new MongoClient(System.getProperty("mongo-host"),
+        Integer.parseInt(System.getProperty("mongo-port")));
     mongoClient.dropDatabase(TEST_DB);
     mongoClient.close();
-    mongoBank = new MongoBank(TEST_HOST, TEST_PORT, TEST_DB, TEST_ACCOUNTS_COLLECTION);
+    mongoBank = new MongoBank(TEST_DB, TEST_ACCOUNTS_COLLECTION);
   }
 
   @Test

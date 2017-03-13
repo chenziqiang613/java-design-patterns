@@ -1,6 +1,6 @@
 /**
  * The MIT License
- * Copyright (c) 2014 Ilkka Seppälä
+ * Copyright (c) 2014-2016 Ilkka Seppälä
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,16 +35,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Mongo lottery ticket database
  */
 public class MongoTicketRepository implements LotteryTicketRepository {
 
-  private static final String DEFAULT_HOST = "localhost";
-  private static final int DEFAULT_PORT = 27017;
   private static final String DEFAULT_DB = "lotteryDB";
   private static final String DEFAULT_TICKETS_COLLECTION = "lotteryTickets";
   private static final String DEFAULT_COUNTERS_COLLECTION = "counters";
@@ -64,27 +64,28 @@ public class MongoTicketRepository implements LotteryTicketRepository {
   /**
    * Constructor accepting parameters
    */
-  public MongoTicketRepository(String host, int port, String dbName, String ticketsCollectionName,
+  public MongoTicketRepository(String dbName, String ticketsCollectionName,
                                String countersCollectionName) {
-    connect(host, port, dbName, ticketsCollectionName, countersCollectionName);
+    connect(dbName, ticketsCollectionName, countersCollectionName);
   }
 
   /**
    * Connect to database with default parameters
    */
   public void connect() {
-    connect(DEFAULT_HOST, DEFAULT_PORT, DEFAULT_DB, DEFAULT_TICKETS_COLLECTION, DEFAULT_COUNTERS_COLLECTION);
+    connect(DEFAULT_DB, DEFAULT_TICKETS_COLLECTION, DEFAULT_COUNTERS_COLLECTION);
   }
 
   /**
    * Connect to database with given parameters
    */
-  public void connect(String host, int port, String dbName, String ticketsCollectionName,
+  public void connect(String dbName, String ticketsCollectionName,
                       String countersCollectionName) {
     if (mongoClient != null) {
       mongoClient.close();
     }
-    mongoClient = new MongoClient(host , port);
+    mongoClient = new MongoClient(System.getProperty("mongo-host"),
+        Integer.parseInt(System.getProperty("mongo-port")));
     database = mongoClient.getDatabase(dbName);
     ticketsCollection = database.getCollection(ticketsCollectionName);
     countersCollection = database.getCollection(countersCollectionName);
@@ -143,7 +144,7 @@ public class MongoTicketRepository implements LotteryTicketRepository {
   @Override
   public Optional<LotteryTicket> findById(LotteryTicketId id) {
     Document find = new Document("ticketId", id.getId());
-    ArrayList<Document> results = ticketsCollection.find(find).limit(1).into(new ArrayList<Document>());
+    List<Document> results = ticketsCollection.find(find).limit(1).into(new ArrayList<Document>());
     if (results.size() > 0) {
       LotteryTicket lotteryTicket = docToTicket(results.get(0));
       return Optional.of(lotteryTicket);
@@ -167,7 +168,7 @@ public class MongoTicketRepository implements LotteryTicketRepository {
   @Override
   public Map<LotteryTicketId, LotteryTicket> findAll() {
     Map<LotteryTicketId, LotteryTicket> map = new HashMap<>();
-    ArrayList<Document> docs = ticketsCollection.find(new Document()).into(new ArrayList<Document>());
+    List<Document> docs = ticketsCollection.find(new Document()).into(new ArrayList<Document>());
     for (Document doc: docs) {
       LotteryTicket lotteryTicket = docToTicket(doc);
       map.put(lotteryTicket.getId(), lotteryTicket);
@@ -181,14 +182,14 @@ public class MongoTicketRepository implements LotteryTicketRepository {
   }
 
   private LotteryTicket docToTicket(Document doc) {
-    PlayerDetails playerDetails = PlayerDetails.create(doc.getString("email"), doc.getString("bank"),
+    PlayerDetails playerDetails = new PlayerDetails(doc.getString("email"), doc.getString("bank"),
         doc.getString("phone"));
     int[] numArray = Arrays.asList(doc.getString("numbers").split(",")).stream().mapToInt(Integer::parseInt).toArray();
-    HashSet<Integer> numbers = new HashSet<>();
+    Set<Integer> numbers = new HashSet<>();
     for (int num: numArray) {
       numbers.add(num);
     }
     LotteryNumbers lotteryNumbers = LotteryNumbers.create(numbers);
-    return LotteryTicket.create(new LotteryTicketId(doc.getInteger("ticketId")), playerDetails, lotteryNumbers);
+    return new LotteryTicket(new LotteryTicketId(doc.getInteger("ticketId")), playerDetails, lotteryNumbers);
   }
 }

@@ -1,6 +1,6 @@
 /**
  * The MIT License
- * Copyright (c) 2014 Ilkka Seppälä
+ * Copyright (c) 2014-2016 Ilkka Seppälä
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,8 @@ import com.iluwatar.hexagonal.banking.InMemoryBank;
 import com.iluwatar.hexagonal.banking.WireTransfers;
 import com.iluwatar.hexagonal.database.InMemoryTicketRepository;
 import com.iluwatar.hexagonal.database.LotteryTicketRepository;
-import com.iluwatar.hexagonal.notifications.LotteryNotifications;
-import com.iluwatar.hexagonal.notifications.StdOutNotifications;
+import com.iluwatar.hexagonal.eventlog.LotteryEventLog;
+import com.iluwatar.hexagonal.eventlog.StdOutEventLog;
 
 /**
  * Guice module for testing dependencies
@@ -37,7 +37,7 @@ public class LotteryTestingModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(LotteryTicketRepository.class).to(InMemoryTicketRepository.class);
-    bind(LotteryNotifications.class).to(StdOutNotifications.class);
+    bind(LotteryEventLog.class).to(StdOutEventLog.class);
     bind(WireTransfers.class).to(InMemoryBank.class);
   }
 }

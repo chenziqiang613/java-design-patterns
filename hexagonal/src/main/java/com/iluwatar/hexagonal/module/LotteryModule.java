@@ -1,6 +1,6 @@
 /**
  * The MIT License
- * Copyright (c) 2014 Ilkka Seppälä
+ * Copyright (c) 2014-2016 Ilkka Seppälä
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,8 @@ import com.iluwatar.hexagonal.banking.MongoBank;
 import com.iluwatar.hexagonal.banking.WireTransfers;
 import com.iluwatar.hexagonal.database.LotteryTicketRepository;
 import com.iluwatar.hexagonal.database.MongoTicketRepository;
-import com.iluwatar.hexagonal.notifications.LotteryNotifications;
-import com.iluwatar.hexagonal.notifications.StdOutNotifications;
+import com.iluwatar.hexagonal.eventlog.LotteryEventLog;
+import com.iluwatar.hexagonal.eventlog.MongoEventLog;
 
 /**
  * Guice module for binding production dependencies
@@ -37,7 +37,7 @@ public class LotteryModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(LotteryTicketRepository.class).to(MongoTicketRepository.class);
-    bind(LotteryNotifications.class).to(StdOutNotifications.class);
+    bind(LotteryEventLog.class).to(MongoEventLog.class);
     bind(WireTransfers.class).to(MongoBank.class);
   }
 }

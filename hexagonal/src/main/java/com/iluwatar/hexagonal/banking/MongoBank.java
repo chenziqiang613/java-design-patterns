@@ -1,6 +1,6 @@
 /**
  * The MIT License
- * Copyright (c) 2014 Ilkka Seppälä
+ * Copyright (c) 2014-2016 Ilkka Seppälä
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,14 +29,13 @@ import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Mongo based banking adapter
  */
 public class MongoBank implements WireTransfers {
 
-  private static final String DEFAULT_HOST = "localhost";
-  private static final int DEFAULT_PORT = 27017;
   private static final String DEFAULT_DB = "lotteryDB";
   private static final String DEFAULT_ACCOUNTS_COLLECTION = "accounts";
 
@@ -54,25 +53,26 @@ public class MongoBank implements WireTransfers {
   /**
    * Constructor accepting parameters
    */
-  public MongoBank(String host, int port, String dbName, String accountsCollectionName) {
-    connect(host, port, dbName, accountsCollectionName);
+  public MongoBank(String dbName, String accountsCollectionName) {
+    connect(dbName, accountsCollectionName);
   }
 
   /**
    * Connect to database with default parameters
    */
   public void connect() {
-    connect(DEFAULT_HOST, DEFAULT_PORT, DEFAULT_DB, DEFAULT_ACCOUNTS_COLLECTION);
+    connect(DEFAULT_DB, DEFAULT_ACCOUNTS_COLLECTION);
   }
 
   /**
    * Connect to database with given parameters
    */
-  public void connect(String host, int port, String dbName, String accountsCollectionName) {
+  public void connect(String dbName, String accountsCollectionName) {
     if (mongoClient != null) {
       mongoClient.close();
     }
-    mongoClient = new MongoClient(host , port);
+    mongoClient = new MongoClient(System.getProperty("mongo-host"),
+        Integer.parseInt(System.getProperty("mongo-port")));
     database = mongoClient.getDatabase(dbName);
     accountsCollection = database.getCollection(accountsCollectionName);
   }
@@ -111,7 +111,7 @@ public class MongoBank implements WireTransfers {
   @Override
   public int getFunds(String bankAccount) {
     Document search = new Document("_id", bankAccount);
-    ArrayList<Document> results = accountsCollection.find(search).limit(1).into(new ArrayList<Document>());
+    List<Document> results = accountsCollection.find(search).limit(1).into(new ArrayList<Document>());
     if (results.size() > 0) {
       return results.get(0).getInteger("funds");
     } else {
